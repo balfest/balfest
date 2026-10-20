@@ -1,0 +1,6 @@
+<section class="event-section" id="events" aria-labelledby="event-title">
+  <div class="container">
+    <div class="section-label"><span>03 / ОРГАНИЗАТОРАМ</span><span>События с характером</span></div>
+    <div class="event-grid"><div><h2 id="event-title" class="preserve-lines">{{ c.events.title }}</h2><p>{{ c.events.description }}</p><a class="button button-light" href="{{ event_mailto }}">Обсудить программу <span aria-hidden="true">↗</span></a><p class="event-mail-note">Откроется письмо с вопросами о вашем событии.</p></div><div class="event-brief"><p class="eyebrow">С чего начнём разговор</p><ol>{% for item in c.events.brief %}<li><span>0{{ loop.index }}</span>{{ item }}</li>{% endfor %}</ol><p>Площадка, ограждение и условия для лошадей согласовываются с командой до подтверждения выступления.</p></div></div>
+  </div>
+</section>

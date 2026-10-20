@@ -1,0 +1,6 @@
+<section class="section media-section" id="media" aria-labelledby="media-title">
+  <div class="container media-grid">
+    <div><p class="eyebrow">05 / В ДВИЖЕНИИ</p><h2 id="media-title" class="preserve-lines">{{ c.media.title }}</h2><p class="media-description">{{ c.media.description }}</p></div>
+    <div class="media-links">{% for item in c.media.links %}<a href="{{ item.url }}" target="_blank" rel="noopener noreferrer"><span><small>{{ item.tag }}</small><strong>{{ item.label }}</strong></span><span class="media-arrow" aria-hidden="true">↗</span></a>{% endfor %}</div>
+  </div>
+</section>

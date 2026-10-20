@@ -1,1 +1,1 @@
-"""БАЛФЕСТ IV — FastAPI application."""
+"""БАГМУТ — FastAPI application, based on the BALFEST site."""

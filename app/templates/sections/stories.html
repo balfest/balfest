@@ -1,0 +1,8 @@
+<section class="section stories-section" id="stories" aria-labelledby="stories-title">
+  <div class="container">
+    <div class="section-label"><span>04 / ПРОЕКТЫ И ВЫСТУПЛЕНИЯ</span><span>Страницы истории центра</span></div>
+    <div class="section-heading"><h2 id="stories-title">За пределами<br><em>тренировочной площадки</em></h2><p>Городские праздники, выставки, театр и кино. Несколько подтверждённых историй из открытых публикаций.</p></div>
+    <div class="case-list">{% for item in c.cases %}<article class="case-row"><span class="case-year">{{ item.year }}</span><div class="case-content"><p class="eyebrow">{{ item.label }}</p><h3>{{ item.title }}</h3><p>{{ item.text }}</p></div><a class="case-source" href="{{ source_index[item.sourceId].url }}" target="_blank" rel="noopener noreferrer" aria-label="{{ item.title }}: открыть публикацию">Публикация <span aria-hidden="true">↗</span></a></article>{% endfor %}</div>
+    <p class="section-note">Архив проектов и прошедших событий. Новые даты и участие команды подтверждаются отдельно.</p>
+  </div>
+</section>

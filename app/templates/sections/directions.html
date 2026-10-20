@@ -1,12 +1,10 @@
-    <section class="section directions-section" id="directions" aria-labelledby="directions-title">
-      <div class="container">
-        <div class="section-heading"><p class="eyebrow">02 / Мир парного танца</p><span class="section-mini">Разные культуры. Общее движение.</span></div>
-        <div class="section-intro"><h2 id="directions-title">Куда приведёт<br><em>ваша музыка?</em></h2><p>От вальса до бачаты.<br>Откройте направление и узнайте, что делает его особенным.</p></div>
-        <div class="directions-grid">{% for direction in c.directions %}
-<details class="direction-card" id="direction-{{ direction.id }}"><summary><span class="direction-top"><span class="direction-category">{{ direction.category }}</span><span class="direction-number">{{ '%02d' | format(loop.index) }}</span></span><span class="direction-name">{% for line in direction.name.split('
-') %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endfor %}</span><span class="direction-hint">О направлении <span class="direction-toggle" aria-hidden="true">+</span></span></summary><p>{{ direction.description }}</p></details>
-{% endfor %}</div>
-        <p class="section-note">{{ c.directionsNote }}</p>
-        {% if studios %}<h3 class="lead studios-title">Участники фестиваля</h3><div class="studio-grid">{% for studio in studios %}<article class="studio-card"><h3>{{ studio.name }}</h3><p>{{ studio.description }}</p><a class="text-link" href="{{ studio.url }}" target="_blank" rel="noopener noreferrer">О студии ↗</a></article>{% endfor %}</div>{% endif %}
-      </div>
-    </section>
+<section class="section programs-section" id="programs" aria-labelledby="programs-title">
+  <div class="container">
+    <div class="section-label"><span>02 / НАПРАВЛЕНИЯ</span><span>Найдите свою точку входа</span></div>
+    <div class="section-heading"><h2 id="programs-title">У каждого —<br><em>свой путь в седло</em></h2><p>От знакомства с лошадью до конной сцены. Выберите направление, а детали обсудите с командой.</p></div>
+    <div class="program-filters" role="group" aria-label="Фильтр направлений" data-filters hidden>{% for category in c.categories %}<button class="filter-button{{ ' is-active' if loop.first else '' }}" type="button" data-filter="{{ category.id }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">{{ category.label }}</button>{% endfor %}</div>
+    <p class="sr-only" id="filter-status" aria-live="polite"></p>
+    <div class="program-grid">{% for item in c.programs %}<article class="program-card" data-category="{{ item.category }}"><div class="card-top"><span>{{ item.number }}</span><span>{{ item.categoryLabel }}</span></div><h3><a class="preserve-lines" href="/programs/{{ item.id }}">{{ item.title }}</a></h3><p>{{ item.short }}</p><a class="card-link" href="/programs/{{ item.id }}" aria-label="Подробнее: {{ item.title | replace('\n', ' ') }}">Познакомиться с направлением <span aria-hidden="true">↗</span></a></article>{% endfor %}</div>
+    <p class="section-note">Занятия и визиты — по предварительной договорённости. Набор, расписание и стоимость уточняйте у центра.</p>
+  </div>
+</section>

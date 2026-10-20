@@ -1,0 +1,6 @@
+<section class="section contacts-section" id="contacts" aria-labelledby="contacts-title">
+  <div class="container">
+    <div class="section-label"><span>06 / КОНТАКТЫ</span><span>До встречи в Красном Бору</span></div>
+    <div class="contacts-grid"><div><h2 id="contacts-title">Первый шаг —<br><em>связаться с нами.</em></h2><p>Расскажите, что вас привело: желание заниматься, семейная поездка или идея события.</p><div class="contact-buttons"><a class="button button-accent" href="{{ c.contacts.vkUrl }}" target="_blank" rel="noopener noreferrer">Написать в VK <span aria-hidden="true">↗</span></a><a class="button button-outline" href="{{ lesson_mailto }}">Написать письмо <span aria-hidden="true">↗</span></a></div></div><div class="contact-info"><p class="eyebrow">ТЕЛЕФОНЫ ЦЕНТРА</p>{% for phone in c.contacts.phones %}<a class="contact-phone" href="tel:{{ phone.value }}">{{ phone.display }}</a>{% endfor %}<a class="contact-email" href="mailto:{{ c.contacts.email }}">{{ c.contacts.email }}</a><div class="address-block"><p class="eyebrow">КАК НАС НАЙТИ</p><address>{{ c.contacts.address }}</address><p>{{ c.contacts.visitNote }}</p><a class="text-link" href="{{ c.contacts.mapUrl }}" target="_blank" rel="noopener noreferrer">Открыть на карте <span aria-hidden="true">↗</span></a></div></div></div>
+  </div>
+</section>

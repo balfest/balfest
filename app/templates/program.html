@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="detail-hero section">
+  <div class="container"><nav class="breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span aria-hidden="true">/</span><a href="/#programs">Направления</a></nav><div class="detail-heading"><div><p class="eyebrow">{{ program.number }} / {{ program.categoryLabel }}</p><h1 class="preserve-lines">{{ program.title }}</h1></div><span class="detail-mark" aria-hidden="true">✳</span></div><p class="detail-intro">{{ program.intro }}</p></div>
+</section>
+<section class="section detail-body">
+  <div class="container detail-grid"><div class="detail-copy">{% for paragraph in program.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}<h2>С чего начать</h2><ul class="detail-points">{% for point in program.points %}<li>{{ point }}</li>{% endfor %}</ul><div class="detail-note">{{ program.note }}</div><details class="source-details"><summary>Публикации об этом направлении</summary><ul>{% for source_id in program.sourceIds %}<li><a href="{{ source_index[source_id].url }}" target="_blank" rel="noopener noreferrer">{{ source_index[source_id].name }} — {{ source_index[source_id].title }} ↗</a></li>{% endfor %}</ul></details></div><aside class="detail-aside"><p class="eyebrow">ОБСУДИМ ВАШУ ИДЕЮ</p><h2>Начнём<br>с разговора.</h2><p>Расскажите о своём опыте, целях и желаемых датах.</p><a class="button button-accent" href="tel:{{ c.contacts.phones[0].value }}">Позвонить <span aria-hidden="true">↗</span></a><a class="text-link" href="{{ c.contacts.vkUrl }}" target="_blank" rel="noopener noreferrer">Написать в VK ↗</a><a class="aside-contacts" href="/#contacts">Все контакты центра</a></aside></div>
+</section>
+<section class="section other-programs"><div class="container"><h2>Ещё один путь<br><em>к знакомству</em></h2><div class="other-grid">{% for item in c.programs if item.id != program.id %}<a href="/programs/{{ item.id }}"><span>{{ item.number }}</span><strong>{{ item.title | replace('\n', ' ') }}</strong><span aria-hidden="true">↗</span></a>{% endfor %}</div></div></section>
+{% endblock %}

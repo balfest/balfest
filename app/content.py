@@ -1,47 +1,21 @@
-"""Load the editable site content and prepare data for Jinja templates."""
-from datetime import date, datetime, timedelta, timezone
+"""Editable content and validated template context, adapted from BALFEST."""
+from datetime import date
 import json
+import os
 from pathlib import Path
 import re
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 BASE_DIR = Path(__file__).resolve().parent
 CONTENT_FILE = BASE_DIR / "data" / "content.json"
-MOSCOW = timezone(timedelta(hours=3))
-MONTHS = ("января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря")
-WEEKDAYS = ("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье")
 
 
-def load_content() -> dict:
-    """Read on each request so content edits do not require a build."""
-    content = json.loads(CONTENT_FILE.read_text(encoding="utf-8"))
-
-    def validate(value):
-        if isinstance(value, dict):
-            for key, item in value.items():
-                if (key.lower().endswith("url") or key == "vk") and item:
-                    parsed = urlsplit(item)
-                    if parsed.scheme != "https" or not parsed.netloc or any(c in item for c in '\r\n<>"'):
-                        raise ValueError(f"Expected an HTTPS link: {key}")
-                if key == "logo" and item:
-                    validate_asset(item)
-                validate(item)
-        elif isinstance(value, list):
-            for item in value:
-                validate(item)
-
-    validate(content)
-    for color in content["theme"].values():
-        if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
-            raise ValueError("Theme colors must use #RRGGBB")
-    validate_asset("assets/" + content["openCall"]["image"])
-    if content["tickets"]["status"] == "on_sale" and not content["tickets"]["url"]:
-        raise ValueError("Ticket sales require a ticket URL")
-    if content["venue"]["confirmed"] and not all(content["venue"][key] for key in ("name", "address")):
-        raise ValueError("A confirmed venue requires a name and address")
-    if content["contacts"]["emailVerified"] and not re.fullmatch(r"[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+", content["contacts"]["email"]):
-        raise ValueError("Invalid contact email")
-    return content
+def validate_https(value: str) -> None:
+    parsed = urlsplit(value)
+    if (parsed.scheme != "https" or not parsed.netloc or not parsed.hostname
+            or parsed.username or parsed.password
+            or any(char.isspace() or char in '<>"\\' for char in value)):
+        raise ValueError("Expected a valid HTTPS URL")
 
 
 def validate_asset(relative_path: str) -> None:
@@ -51,65 +25,111 @@ def validate_asset(relative_path: str) -> None:
         raise ValueError(f"Missing or invalid static asset: {relative_path}")
 
 
-def long_date(value: date) -> str:
-    return f"{value.day} {MONTHS[value.month - 1]} {value.year}"
+def validate_content(content: dict) -> None:
+    def walk(value):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key.lower().endswith("url") and item:
+                    validate_https(item)
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(content)
+    for color in content["theme"].values():
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+            raise ValueError("Theme colors must use #RRGGBB")
+    contacts = content["contacts"]
+    if not re.fullmatch(r"[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+", contacts["email"]):
+        raise ValueError("Invalid contact email")
+    if not contacts["phones"]:
+        raise ValueError("At least one contact phone is required")
+    for phone in contacts["phones"]:
+        if not re.fullmatch(r"\+7\d{10}", phone["value"]):
+            raise ValueError("Phone numbers must use +7XXXXXXXXXX")
+    source_ids = [source["id"] for source in content["sources"]]
+    program_ids = [program["id"] for program in content["programs"]]
+    if len(source_ids) != len(set(source_ids)) or len(program_ids) != len(set(program_ids)):
+        raise ValueError("Duplicate content IDs")
+    categories = {item["id"] for item in content["categories"]}
+    for program in content["programs"]:
+        if not re.fullmatch(r"[a-z][a-z0-9-]*", program["id"]):
+            raise ValueError("Invalid program slug")
+        if program["category"] not in categories:
+            raise ValueError("Unknown program category")
+
+    def check_sources(value):
+        if isinstance(value, dict):
+            refs = value.get("sourceIds", [])
+            if "sourceId" in value:
+                refs = [*refs, value["sourceId"]]
+            if not set(refs).issubset(source_ids):
+                raise ValueError("Unknown source reference")
+            for item in value.values():
+                check_sources(item)
+        elif isinstance(value, list):
+            for item in value:
+                check_sources(item)
+
+    check_sources(content)
+    date.fromisoformat(content["site"]["checkedAt"])
+    for asset in ("assets/horse.svg", "assets/favicon.svg", "assets/og-image.svg"):
+        validate_asset(asset)
 
 
-def page_context(content: dict, *, today: date | None = None) -> dict:
-    site = content["site"]
-    start, end = (date.fromisoformat(site[key]) for key in ("startDate", "endDate"))
-    if end < start:
-        raise ValueError("Festival end precedes its start")
-    date_label = (f"{start.day}–{end.day} {MONTHS[start.month - 1]} {start.year}"
-                  if (start.year, start.month) == (end.year, end.month)
-                  else f"{long_date(start)} — {long_date(end)}")
-    call = content["openCall"]
-    deadline = date.fromisoformat(call["deadline"]) if call.get("deadlineConfirmed") and call.get("deadline") else None
-    call_visible = bool(call["enabled"]) and (deadline is None or (today or datetime.now(MOSCOW).date()) <= deadline)
-    on_sale = content["tickets"]["status"] == "on_sale" and bool(content["tickets"]["url"])
-    options = [item for item in content["tickets"]["options"] if item.get("confirmed")]
-    for item in options:
-        if not isinstance(item["price"], (int, float)) or item["price"] < 0:
-            raise ValueError("Ticket price must be nonnegative")
-    days = []
-    seen_dates = set()
-    direction_ids = [item["id"] for item in content["directions"]]
-    if len(set(direction_ids)) != len(direction_ids):
-        raise ValueError("Duplicate dance direction IDs")
-    for item in content["program"]["days"]:
-        day = date.fromisoformat(item["date"])
-        if not start <= day <= end or day in seen_dates:
-            raise ValueError("Invalid or duplicate program date")
-        seen_dates.add(day)
-        sessions = [session for session in item["sessions"] if session.get("confirmed")]
-        for session in sessions:
-            if session["directionId"] not in direction_ids or not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", session["time"]):
-                raise ValueError("Invalid program session direction or time")
-        days.append(dict(date=day.isoformat(), weekday=WEEKDAYS[day.weekday()], month=MONTHS[day.month - 1], year=day.year, number=day.day, sessions=sessions))
-    canonical = site["url"].rstrip("/") + "/"
-    og_image = canonical + "static/assets/og-image.jpg"
+def load_content() -> dict:
+    """Read per request so an editor can update JSON without rebuilding."""
+    content = json.loads(CONTENT_FILE.read_text(encoding="utf-8"))
+    validate_content(content)
+    return content
+
+
+def public_origin(content: dict) -> str:
+    """Use configured origin only; never trust a request Host for canonical URLs."""
+    value = os.environ.get("SITE_URL", content["site"].get("url", "")).strip().rstrip("/")
+    if not value:
+        return ""
+    validate_https(value)
+    parsed = urlsplit(value)
+    if parsed.path or parsed.query or parsed.fragment:
+        raise ValueError("SITE_URL must be an HTTPS origin, without a path or query")
+    return value
+
+
+def page_context(content: dict, *, page_path: str = "/", title: str | None = None,
+                 description: str | None = None) -> dict:
+    origin = public_origin(content)
+    contacts = content["contacts"]
     schema = {
-        "@context": "https://schema.org", "@type": "Event", "name": site["name"],
-        "alternateName": site["latinName"], "description": site["description"], "url": canonical,
-        "startDate": site["startDate"], "endDate": site["endDate"], "inLanguage": "ru",
-        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
-        "eventStatus": "https://schema.org/EventScheduled", "image": [og_image],
-        "location": {"@type": "City", "name": site["city"], "address": {"@type": "PostalAddress", "addressLocality": site["city"], "addressCountry": "RU"}},
-        "organizer": {"@type": "Organization", "name": "БАЛФЕСТ", "url": canonical, "sameAs": [content["contacts"]["vk"]]},
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": content["site"]["fullName"],
+        "alternateName": "БАГМУТ",
+        "description": content["site"]["description"],
+        "telephone": contacts["phones"][0]["value"],
+        "email": contacts["email"],
+        "sameAs": [contacts["vkUrl"]],
+        "address": {
+            "@type": "PostalAddress",
+            "addressLocality": contacts["locality"],
+            "addressRegion": "Ленинградская область",
+            "streetAddress": "2-я Красная дорога, 8А",
+            "addressCountry": "RU",
+        },
     }
-    venue = content["venue"]
-    if venue["confirmed"]:
-        schema["location"] = {"@type": "Place", "name": venue["name"], "address": {"@type": "PostalAddress", "streetAddress": venue["address"], "addressLocality": site["city"], "addressCountry": "RU"}}
-    if on_sale and options:
-        schema["offers"] = [{"@type": "Offer", "name": item["name"], "url": content["tickets"]["url"], "price": item["price"], "priceCurrency": "RUB"} for item in options]
-    return dict(
-        c=content, date_label=date_label, days=days, deadline=deadline,
-        deadline_label=long_date(deadline) if deadline else "", call_visible=call_visible,
-        on_sale=on_sale, ticket_options=options,
-        ticket_status="Билеты в продаже" if on_sale else "Билеты скоро в продаже",
-        program_status="Программа опубликована" if content["program"]["status"] == "published" else "Программа формируется",
-        venue_status=venue["name"] if venue["confirmed"] else "Площадка будет объявлена",
-        studios=[item for item in content["studios"] if item.get("confirmed")],
-        partners=[item for item in content["partners"] if item.get("confirmed")],
-        canonical=canonical, og_image=og_image, event_schema=schema,
-    )
+    if origin:
+        schema["url"] = origin + "/"
+    source_index = {item["id"]: item for item in content["sources"]}
+    return {
+        "c": content, "title": title or content["site"]["title"],
+        "description": description or content["site"]["description"],
+        "canonical": origin + page_path if origin else "",
+        "og_image": origin + "/static/assets/og-image.svg" if origin else "",
+        "indexable": bool(origin), "organization_schema": schema,
+        "source_index": source_index, "year": date.today().year,
+        "checked_label": date.fromisoformat(content["site"]["checkedAt"]).strftime("%d.%m.%Y"),
+        "lesson_mailto": "mailto:" + contacts["email"] + "?subject=" + quote("Занятия в центре БАГМУТ"),
+        "event_mailto": "mailto:" + contacts["email"] + "?subject=" + quote(content["events"]["subject"])
+            + "&body=" + quote("Здравствуйте!\nДата: \nМесто: \nФормат события: \nАудитория: \nПлощадка: \nБюджет: \nКонтакт для связи: \n"),
+    }

@@ -1,4 +1,4 @@
-# Секреты и локальные настройки
+# Secrets and machine-local configuration
 .env
 .env.*
 !.env.example
@@ -6,20 +6,17 @@
 *.key
 id_rsa
 id_ed25519
-
 # Python
 __pycache__/
-#*.py[cod]
+*.py[cod]
 .venv/
 venv/
-
-# JavaScript / Node.js
-node_modules/
-
-# Локальные настройки редактора
+.pytest_cache/
+.coverage
+# Editor and build files
 .vscode/
-
-# Служебные файлы
+node_modules/
 *.log
+*.zip
 .DS_Store
 Thumbs.db
