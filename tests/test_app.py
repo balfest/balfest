@@ -41,7 +41,7 @@ class SiteTests(unittest.TestCase):
         self.assertGreater(len(parser.assets), 8)
         for asset in parser.assets:
             self.assertEqual(self.client.get(asset).status_code, 200, asset)
-        self.assertIn("--bg:#0b1422", self.client.get("/theme.css").text)
+        self.assertIn(f"--bg:{load_content()['theme']['background']}", self.client.get("/theme.css").text)
 
     def test_metadata_and_not_found(self):
         self.assertEqual(self.client.get("/sitemap.xml").status_code, 200)

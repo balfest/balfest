@@ -199,10 +199,10 @@
     "socials": []
   },
   "theme": {
-    "background": "#0b1422",
-    "surface": "#111e30",
-    "gold": "#d6b886",
-    "text": "#f4f0e8",
-    "muted": "#b2bbc9"
+    "background": "#faf8f3",
+    "surface": "#f0ebe2",
+    "gold": "#806027",
+    "text": "#202c38",
+    "muted": "#56616c"
   }
 }
