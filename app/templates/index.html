@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+
+  <a class="skip-link" href="#main">Перейти к содержанию</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="{{ c.site.name }} — в начало страницы">БАЛФЕСТ<span>IV</span></a>
+      <nav class="desktop-nav" aria-label="Основная навигация">
+        <a href="#about">О фестивале</a><a href="#directions">Танцы</a><a href="#program">4–6 декабря</a>{% if call_visible %}<a href="#participation">Участие</a>{% endif %}<a href="#partners">Партнёрам</a>
+      </nav>
+      <div class="header-actions">
+        <a class="header-tickets" href="#tickets">Билеты<span aria-hidden="true">↗</span></a>
+        <details class="mobile-menu" id="mobile-menu">
+          <summary aria-label="Открыть навигацию"><span class="menu-icon" aria-hidden="true"></span><span>Меню</span></summary>
+          <nav aria-label="Мобильная навигация">
+            <a href="#about">О фестивале</a><a href="#directions">Мир танцев</a><a href="#program">4–6 декабря</a>{% if call_visible %}<a href="#participation">Участие</a>{% endif %}<a href="#tickets">Билеты</a><a href="#partners">Партнёрам</a><a href="#contacts">Контакты</a>
+          </nav>
+        </details>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <picture class="hero-picture">
+        <img src="{{ url_for('static', path='assets/hero-1280.webp') }}" srcset="{{ url_for('static', path='assets/hero-768.webp') }} 768w, {{ url_for('static', path='assets/hero-1280.webp') }} 1280w, {{ url_for('static', path='assets/hero-2048.webp') }} 2048w" sizes="100vw" width="2048" height="768" alt="{{ c.hero.imageAlt }}" fetchpriority="high" decoding="async">
+      </picture>
+      <div class="container hero-content">
+        <div class="hero-meta"><span>{{ c.site.city }}</span><span class="meta-dot" aria-hidden="true"></span><span>{{ date_label }}</span></div>
+        <p class="eyebrow hero-eyebrow">{{ c.hero.eyebrow }}</p>
+        <h1 id="hero-title">БАЛФЕСТ <em>IV</em></h1>
+        <div class="hero-story">
+          <p class="hero-tagline">{{ c.hero.tagline }}<br><span>{{ c.hero.taglineAccent }}</span></p>
+          <p class="hero-description">{{ c.hero.description }}</p>
+          <div class="hero-buttons"><a class="button button-gold" href="#about">{{ c.hero.primaryLabel }}<span aria-hidden="true">↗</span></a><a class="button button-ghost" href="#directions">{{ c.hero.secondaryLabel }}<span aria-hidden="true">↓</span></a></div>
+        </div>
+      </div>
+      <p class="hero-caption">{{ c.hero.imageCaption }}</p>
+    </section>
+    <div class="status-strip">
+      <div class="container status-inner"><div><span class="status-dot" aria-hidden="true"></span>{{ program_status }}</div><div><span class="status-dot" aria-hidden="true"></span>{{ ticket_status }}</div><div><span class="status-dot" aria-hidden="true"></span>{{ venue_status }}</div></div>
+    </div>
+    {% include 'sections/about.html' %}
+    {% include 'sections/directions.html' %}
+    {% include 'sections/program.html' %}
+    {% include 'sections/participation.html' %}
+    {% include 'sections/tickets.html' %}
+    {% include 'sections/partners.html' %}
+    {% include 'sections/faq.html' %}
+  </main>
+  <footer id="contacts" class="site-footer">
+    <div class="container"><div class="footer-main"><div><a class="brand footer-brand" href="#top" aria-label="БАЛФЕСТ — в начало страницы">БАЛФЕСТ<span>IV</span></a><p>Фестиваль всех направлений парного танца.<br>{{ c.site.city }} · {{ date_label }}</p></div><div class="footer-contact"><p class="eyebrow">Встречаемся и остаёмся на связи</p><a class="footer-vk" href="{{ c.contacts.vk }}" target="_blank" rel="noopener noreferrer">БАЛФЕСТ в VK <span aria-hidden="true">↗</span></a>{% if c.contacts.emailVerified %}<a href="mailto:{{ c.contacts.email }}">{{ c.contacts.email }}</a>{% endif %}{% for social in c.contacts.socials %}<a href="{{ social.url }}" target="_blank" rel="noopener noreferrer">{{ social.name }}</a>{% endfor %}</div></div><div class="footer-bottom"><span>© БАЛФЕСТ · {{ c.site.year }}</span><span>Площадка и программа будут объявлены.</span><a href="#top">Наверх <span aria-hidden="true">↑</span></a></div></div>
+  </footer>
+
+
+{% endblock %}

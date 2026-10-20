@@ -1,0 +1,7 @@
+    <section class="section about-section" id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">01 / О фестивале</p><span class="section-marker" aria-hidden="true">✳</span></div>
+        <div class="about-grid"><h2 id="about-title">{{ c.about.heading }}<br><em>{{ c.about.accent }}</em></h2><div class="about-copy"><p class="lead">{{ c.about.lead }}</p>{% for paragraph in c.about.paragraphs %}<p>{{ paragraph }}</p>{% endfor %}<a class="text-link" href="#directions">Найдите свой танцевальный мир <span aria-hidden="true">↗</span></a></div></div>
+        <div class="audience-grid">{% for audience in c.about.audiences %}<article class="audience-card"><span class="audience-number">{{ audience.number }}</span><h3>{{ audience.title }}</h3><p>{{ audience.text }}</p></article>{% endfor %}</div>
+      </div>
+    </section>
