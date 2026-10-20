@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="{{BACKGROUND}}">
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{DESCRIPTION}}">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="{{CANONICAL}}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="{{NAME}}">
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:url" content="{{CANONICAL}}">
+  <meta property="og:image" content="{{OG_IMAGE}}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="БАЛФЕСТ IV — 4–6 декабря 2026, Санкт-Петербург">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{TITLE}}">
+  <meta name="twitter:description" content="{{DESCRIPTION}}">
+  <meta name="twitter:image" content="{{OG_IMAGE}}">
+  {{VERIFICATION}}
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <link rel="preload" as="image" href="assets/hero-1280.webp" imagesrcset="assets/hero-768.webp 768w, assets/hero-1280.webp 1280w, assets/hero-2048.webp 2048w" imagesizes="100vw" fetchpriority="high">
+  <link rel="stylesheet" href="{{CSS_URL}}">
+  <link rel="stylesheet" href="{{THEME_URL}}">
+  <script defer src="{{JS_URL}}"></script>
+  {{ANALYTICS_SCRIPT}}
+  <script type="application/ld+json" id="event-schema">{{EVENT_JSON}}</script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Перейти к содержанию</a>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top" aria-label="{{NAME}} — в начало страницы">БАЛФЕСТ<span>IV</span></a>
+      <nav class="desktop-nav" aria-label="Основная навигация">
+        <a href="#about">О фестивале</a><a href="#directions">Танцы</a><a href="#program">4–6 декабря</a>{{OPEN_CALL_NAV}}<a href="#partners">Партнёрам</a>
+      </nav>
+      <div class="header-actions">
+        <a class="header-tickets" href="#tickets">Билеты<span aria-hidden="true">↗</span></a>
+        <details class="mobile-menu" id="mobile-menu">
+          <summary aria-label="Открыть навигацию"><span class="menu-icon" aria-hidden="true"></span><span>Меню</span></summary>
+          <nav aria-label="Мобильная навигация">
+            <a href="#about">О фестивале</a><a href="#directions">Мир танцев</a><a href="#program">4–6 декабря</a>{{OPEN_CALL_NAV}}<a href="#tickets">Билеты</a><a href="#partners">Партнёрам</a><a href="#contacts">Контакты</a>
+          </nav>
+        </details>
+      </div>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <picture class="hero-picture">
+        <img src="assets/hero-1280.webp" srcset="assets/hero-768.webp 768w, assets/hero-1280.webp 1280w, assets/hero-2048.webp 2048w" sizes="100vw" width="2048" height="768" alt="{{HERO_ALT}}" fetchpriority="high" decoding="async">
+      </picture>
+      <div class="container hero-content">
+        <div class="hero-meta"><span>{{CITY}}</span><span class="meta-dot" aria-hidden="true"></span><span>{{DATE_RANGE}}</span></div>
+        <p class="eyebrow hero-eyebrow">{{HERO_EYEBROW}}</p>
+        <h1 id="hero-title">БАЛФЕСТ <em>IV</em></h1>
+        <div class="hero-story">
+          <p class="hero-tagline">{{HERO_TAGLINE}}<br><span>{{HERO_ACCENT}}</span></p>
+          <p class="hero-description">{{HERO_DESCRIPTION}}</p>
+          <div class="hero-buttons"><a class="button button-gold" href="#about">{{HERO_PRIMARY}}<span aria-hidden="true">↗</span></a><a class="button button-ghost" href="#directions">{{HERO_SECONDARY}}<span aria-hidden="true">↓</span></a></div>
+        </div>
+      </div>
+      <p class="hero-caption">{{HERO_CAPTION}}</p>
+    </section>
+    <div class="status-strip">
+      <div class="container status-inner"><div><span class="status-dot" aria-hidden="true"></span>{{PROGRAM_STATUS}}</div><div><span class="status-dot" aria-hidden="true"></span>{{TICKETS_STATUS}}</div><div><span class="status-dot" aria-hidden="true"></span>{{VENUE_STATUS}}</div></div>
+    </div>
+    <section class="section about-section" id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">01 / О фестивале</p><span class="section-marker" aria-hidden="true">✳</span></div>
+        <div class="about-grid"><h2 id="about-title">{{ABOUT_HEADING}}<br><em>{{ABOUT_ACCENT}}</em></h2><div class="about-copy"><p class="lead">{{ABOUT_LEAD}}</p>{{ABOUT_PARAGRAPHS}}<a class="text-link" href="#directions">Найдите свой танцевальный мир <span aria-hidden="true">↗</span></a></div></div>
+        <div class="audience-grid">{{AUDIENCES}}</div>
+      </div>
+    </section>
+    <section class="section directions-section" id="directions" aria-labelledby="directions-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">02 / Мир парного танца</p><span class="section-mini">Разные культуры. Общее движение.</span></div>
+        <div class="section-intro"><h2 id="directions-title">Куда приведёт<br><em>ваша музыка?</em></h2><p>От вальса до бачаты.<br>Откройте направление и узнайте, что делает его особенным.</p></div>
+        <div class="directions-grid">{{DIRECTIONS}}</div>
+        <p class="section-note">{{DIRECTIONS_NOTE}}</p>
+        {{STUDIOS}}
+      </div>
+    </section>
+    <section class="section program-section" id="program" aria-labelledby="program-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">03 / {{DATE_RANGE}}</p><span class="status-badge">{{PROGRAM_STATUS}}</span></div>
+        <div class="section-intro"><h2 id="program-title">Три дня.<br><em>Много открытий.</em></h2><p>{{PROGRAM_INTRO}}</p></div>
+        <div class="days-grid">{{PROGRAM_DAYS}}</div>
+        <div class="venue-note"><span class="pin-icon" aria-hidden="true">{{PIN_ICON}}</span><div>{{VENUE_CONTENT}}</div></div>
+      </div>
+    </section>
+    {{OPEN_CALL_SECTION}}
+    <section class="section tickets-section" id="tickets" aria-labelledby="tickets-title">
+      <div class="container tickets-panel">
+        <div class="tickets-topline"><p class="eyebrow">05 / Гостям фестиваля</p><span class="ticket-mark" aria-hidden="true">✦</span></div>
+        <div class="tickets-layout"><div><h2 id="tickets-title">{{TICKETS_HEADING}}<br><em>{{TICKETS_ACCENT}}</em></h2><p>{{TICKETS_DESCRIPTION}}</p>{{TICKET_OPTIONS}}</div><div class="ticket-action"><span class="status-badge ticket-status">{{TICKETS_STATUS}}</span>{{TICKET_ACTION}}<p class="small-note">Новости и анонсы — в официальном сообществе БАЛФЕСТ.</p></div></div>
+      </div>
+    </section>
+    <section class="section partners-section" id="partners" aria-labelledby="partners-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">06 / Партнёрам</p><span class="section-mini">Идеи, которые встречаются</span></div>
+        <div class="partners-layout"><h2 id="partners-title">{{PARTNERS_HEADING}}<br><em>{{PARTNERS_ACCENT}}</em></h2><div><p class="lead">{{PARTNERS_DESCRIPTION}}</p><ul class="collaboration-list">{{PARTNER_FORMATS}}</ul><a class="button button-outline" href="{{PARTNERS_URL}}" target="_blank" rel="noopener noreferrer">{{PARTNERS_LABEL}}<span aria-hidden="true">↗</span></a></div></div>
+        {{PARTNER_LOGOS}}
+      </div>
+    </section>
+    <section class="section faq-section" id="faq" aria-labelledby="faq-title">
+      <div class="container faq-layout"><div><p class="eyebrow">07 / Перед встречей</p><h2 id="faq-title">Первый шаг —<br><em>простой.</em></h2></div><div class="faq-list">{{FAQ}}</div></div>
+    </section>
+  </main>
+  <footer id="contacts" class="site-footer">
+    <div class="container"><div class="footer-main"><div><a class="brand footer-brand" href="#top" aria-label="БАЛФЕСТ — в начало страницы">БАЛФЕСТ<span>IV</span></a><p>Фестиваль всех направлений парного танца.<br>{{CITY}} · {{DATE_RANGE}}</p></div><div class="footer-contact"><p class="eyebrow">Встречаемся и остаёмся на связи</p><a class="footer-vk" href="{{VK_URL}}" target="_blank" rel="noopener noreferrer">БАЛФЕСТ в VK <span aria-hidden="true">↗</span></a>{{CONTACT_EMAIL}}{{SOCIALS}}</div></div><div class="footer-bottom"><span>© БАЛФЕСТ · {{YEAR}}</span><span>Площадка и программа будут объявлены.</span><a href="#top">Наверх <span aria-hidden="true">↑</span></a></div></div>
+  </footer>
+</body>
+</html>

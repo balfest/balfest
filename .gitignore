@@ -1,0 +1,25 @@
+# Секреты и локальные настройки
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# JavaScript / Node.js
+node_modules/
+
+# Локальные настройки редактора
+.vscode/
+
+# Служебные файлы
+*.log
+.DS_Store
+Thumbs.db
