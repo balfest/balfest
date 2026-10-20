@@ -1,0 +1,6 @@
+    <section class="section tickets-section" id="tickets" aria-labelledby="tickets-title">
+      <div class="container tickets-panel">
+        <div class="tickets-topline"><p class="eyebrow">05 / Гостям фестиваля</p><span class="ticket-mark" aria-hidden="true">✦</span></div>
+        <div class="tickets-layout"><div><h2 id="tickets-title">{{ 'До встречи' if on_sale else 'Ваш танец' }}<br><em>{{ 'на БАЛФЕСТ.' if on_sale else 'начнётся здесь.' }}</em></h2><p>{{ c.tickets.description }}</p>{% if on_sale and ticket_options %}<ul class="ticket-options">{% for option in ticket_options %}<li><span>{{ option.name }}</span><strong>{{ option.price }} ₽</strong></li>{% endfor %}</ul>{% endif %}</div><div class="ticket-action"><span class="status-badge ticket-status">{{ ticket_status }}</span><a class="button button-gold" href="{{ c.tickets.url if on_sale else c.contacts.vk }}" target="_blank" rel="noopener noreferrer">{{ c.tickets.label if on_sale else 'Следить за новостями в VK' }}<span aria-hidden="true">↗</span></a><p class="small-note">Новости и анонсы — в официальном сообществе БАЛФЕСТ.</p></div></div>
+      </div>
+    </section>

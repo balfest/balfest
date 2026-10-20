@@ -1,0 +1,7 @@
+    <section class="section partners-section" id="partners" aria-labelledby="partners-title">
+      <div class="container">
+        <div class="section-heading"><p class="eyebrow">06 / Партнёрам</p><span class="section-mini">Идеи, которые встречаются</span></div>
+        <div class="partners-layout"><h2 id="partners-title">{{ c.collaboration.heading }}<br><em>{{ c.collaboration.accent }}</em></h2><div><p class="lead">{{ c.collaboration.description }}</p><ul class="collaboration-list">{% for item in c.collaboration.formats %}<li>{{ item }}</li>{% endfor %}</ul><a class="button button-outline" href="{{ c.collaboration.url }}" target="_blank" rel="noopener noreferrer">{{ c.collaboration.label }}<span aria-hidden="true">↗</span></a></div></div>
+        {% if partners %}<div class="partners-grid">{% for partner in partners %}<a class="partner-logo" href="{{ partner.url }}" target="_blank" rel="noopener noreferrer">{% if partner.logo %}<img src="{{ url_for('static', path=partner.logo) }}" alt="{{ partner.name }}" loading="lazy" decoding="async">{% endif %}<p>{{ partner.name }}</p></a>{% endfor %}</div>{% endif %}
+      </div>
+    </section>

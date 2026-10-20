@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="theme-color" content="{{ c.theme.background }}">
+  <title>{{ c.site.title }}</title>
+  <meta name="description" content="{{ c.site.description }}">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="canonical" href="{{ canonical }}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:site_name" content="{{ c.site.name }}">
+  <meta property="og:title" content="{{ c.site.title }}">
+  <meta property="og:description" content="{{ c.site.description }}">
+  <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="БАЛФЕСТ IV — 4–6 декабря 2026, Санкт-Петербург">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ c.site.title }}">
+  <meta name="twitter:description" content="{{ c.site.description }}">
+  <meta name="twitter:image" content="{{ og_image }}">
+  
+  <link rel="icon" href="{{ url_for('static', path='assets/favicon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', path='assets/apple-touch-icon.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', path='assets/hero-1280.webp') }}" imagesrcset="{{ url_for('static', path='assets/hero-768.webp') }} 768w, {{ url_for('static', path='assets/hero-1280.webp') }} 1280w, {{ url_for('static', path='assets/hero-2048.webp') }} 2048w" imagesizes="100vw" fetchpriority="high">
+  <link rel="stylesheet" href="{{ url_for('static', path='assets/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('theme') }}">
+  <script defer src="{{ url_for('static', path='assets/site.js') }}"></script>
+  
+  <script type="application/ld+json" id="event-schema">{{ event_schema | tojson }}</script>
+</head>
+<body id="top">
+{% block content %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,1 @@
+"""БАЛФЕСТ IV — FastAPI application."""

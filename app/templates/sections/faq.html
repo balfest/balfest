@@ -1,0 +1,3 @@
+    <section class="section faq-section" id="faq" aria-labelledby="faq-title">
+      <div class="container faq-layout"><div><p class="eyebrow">07 / Перед встречей</p><h2 id="faq-title">Первый шаг —<br><em>простой.</em></h2></div><div class="faq-list">{% for item in c.faq %}<details><summary>{{ item.question }}<span aria-hidden="true">+</span></summary><p>{{ item.answer }}</p></details>{% endfor %}</div></div>
+    </section>
