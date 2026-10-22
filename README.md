@@ -136,3 +136,14 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 используйте HTTPS через обратный прокси и настройте автозапуск процесса Uvicorn.
 Чтобы URL в статических ресурсах учитывали HTTPS за доверенным прокси,
 настройте его forwarded headers и доверенные адреса в Uvicorn под своё окружение.
+
+
+## Локальный Docker-preview и GitHub Actions
+
+Добавлена конфигурация FastAPI + Nginx для Ubuntu в VirtualBox:
+- Dockerfile — runtime и отдельная стадия unit-тестов;
+- compose.yaml — два контейнера (Nginx:8080, FastAPI:8000 во внутренней сети);
+- .github/workflows/local-preview.yml — проверка и деплой через self-hosted runner;
+- docs/LOCAL_RUNNER.md — пошаговая установка Docker, runner и настройка сети VirtualBox.
+
+Подробная инструкция: **[Локальный runner и Docker-preview](docs/LOCAL_RUNNER.md)**.

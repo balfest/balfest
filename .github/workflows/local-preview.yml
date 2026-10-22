@@ -1,0 +1,43 @@
+name: BALFEST local VM preview
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+# Never run untrusted pull requests on a self-hosted runner.
+permissions:
+  contents: read
+concurrency:
+  group: balfest-local-preview
+  cancel-in-progress: false
+jobs:
+  test-and-deploy:
+    name: Test and deploy to Ubuntu VM
+    runs-on: [self-hosted, linux, x64, balfest-vm]
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check Docker and Compose
+        run: |
+          docker version
+          docker compose version
+      - name: Run project tests in Docker
+        run: docker build --target test --tag balfest-preview-tests:latest .
+      - name: Deploy FastAPI and Nginx
+        run: docker compose --project-name balfest-preview up --detach --build --remove-orphans --wait --wait-timeout 120
+      - name: Smoke-test HTTP and SEO endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-connrefused http://127.0.0.1:8080/ -o /tmp/balfest-preview-home.html
+          grep -q 'БАЛФЕСТ' /tmp/balfest-preview-home.html
+          curl --fail --silent --show-error http://127.0.0.1:8080/robots.txt > /dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8080/sitemap.xml > /dev/null
+          echo 'Preview: http://127.0.0.1:8080/'
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose --project-name balfest-preview ps || true
+          docker compose --project-name balfest-preview logs --tail=100 || true
