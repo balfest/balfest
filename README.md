@@ -138,12 +138,13 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 настройте его forwarded headers и доверенные адреса в Uvicorn под своё окружение.
 
 
-## Локальный Docker-preview и GitHub Actions
 
-Добавлена конфигурация FastAPI + Nginx для Ubuntu в VirtualBox:
-- Dockerfile — runtime и отдельная стадия unit-тестов;
-- compose.yaml — два контейнера (Nginx:8080, FastAPI:8000 во внутренней сети);
-- .github/workflows/local-preview.yml — проверка и деплой через self-hosted runner;
-- docs/LOCAL_RUNNER.md — пошаговая установка Docker, runner и настройка сети VirtualBox.
+## Удалённый Docker-preview через GitHub Actions
 
-Подробная инструкция: **[Локальный runner и Docker-preview](docs/LOCAL_RUNNER.md)**.
+- GitHub-hosted runner ubuntu-24.04; self-hosted runner на сервере не требуется.
+- SSH-подключение к удалённой Ubuntu по защищённому ключу и pinned host key.
+- **Первый удалённый шаг:** проверить Docker Engine + Compose; при необходимости установить.
+- Проверить Docker test-stage, Compose, FastAPI, Nginx и HTTP-ресурсы.
+- Сайт доступен по SSH-туннелю: http://127.0.0.1:8080/ .
+
+Полная настройка: **[docs/REMOTE_DEPLOY.md](docs/REMOTE_DEPLOY.md)**.

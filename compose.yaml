@@ -27,8 +27,10 @@ services:
     depends_on:
       app:
         condition: service_healthy
+    # SSH tunnel to the remote host is required by default.
+    # Docker-published ports can bypass Ubuntu UFW firewall policies.
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     security_opt:
       - no-new-privileges:true
     healthcheck:

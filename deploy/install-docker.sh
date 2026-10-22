@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idempotent Docker Engine + Compose installation for dedicated Ubuntu runners.
+# Idempotent Docker Engine + Compose bootstrap on a remote Ubuntu server.
 set -Eeuo pipefail
 
 if [[ "$(id -u)" -ne 0 ]]; then
@@ -17,7 +17,7 @@ if [[ "$ID" != "ubuntu" ]]; then
   exit 1
 fi
 if [[ "$(uname -m)" != "x86_64" ]]; then
-  echo "::error::The workflow runner is configured for Linux x86_64 only." >&2
+  echo "::error::Remote Docker preview currently targets Linux x86_64 only." >&2
   exit 1
 fi
 
@@ -26,6 +26,11 @@ if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; 
     systemctl enable --now docker
   fi
   if docker info >/dev/null 2>&1; then
+    if ! command -v curl >/dev/null 2>&1; then
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update
+      apt-get install -y curl
+    fi
     echo "Docker Engine and Compose are already available."
     docker --version
     docker compose version
