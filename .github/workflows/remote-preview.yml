@@ -28,17 +28,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Configure verified SSH access
+      - name: Configure SSH access
         id: ssh
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
             if [[ -z "${!key}" ]]; then
               echo "::error::Missing GitHub secret: $key"
               exit 1
@@ -46,23 +44,18 @@ jobs:
           done
           [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]] || { echo "::error::Invalid DEPLOY_HOST"; exit 1; }
           [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || { echo "::error::Invalid DEPLOY_USER"; exit 1; }
-          [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] || { echo "::error::Invalid DEPLOY_PORT"; exit 1; }
-          (( 10#$DEPLOY_PORT >= 1 && 10#$DEPLOY_PORT <= 65535 )) || { echo "::error::Port out of range"; exit 1; }
 
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/balfest_deploy"
           chmod 600 "$HOME/.ssh/balfest_deploy"
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
-          chmod 600 "$HOME/.ssh/known_hosts"
 
           {
             echo 'Host balfest-remote'
             printf '  HostName %s\n' "$DEPLOY_HOST"
             printf '  User %s\n' "$DEPLOY_USER"
-            printf '  Port %s\n' "$DEPLOY_PORT"
             printf '  IdentityFile %s/.ssh/balfest_deploy\n' "$HOME"
-            printf '  UserKnownHostsFile %s/.ssh/known_hosts\n' "$HOME"
-            echo '  StrictHostKeyChecking yes'
+            echo '  Port 22'
+            echo '  StrictHostKeyChecking accept-new'
             echo '  IdentitiesOnly yes'
             echo '  BatchMode yes'
             echo '  ConnectTimeout 20'
@@ -77,7 +70,9 @@ jobs:
             exit 1
           fi
 
-          # Verifies network reachability, pinned host identity and user authentication.
+          # Trust-on-first-use: unknown host keys are accepted on first connection.
+          # This is less secure than a pinned host key, especially on ephemeral runners.
+          # Verifies network reachability and SSH user authentication.
           ssh -T balfest-remote 'printf "SSH connection to remote server verified\n"'
 
       # First remote operation: check whether Docker works, install if missing.
@@ -114,5 +109,5 @@ jobs:
           echo '### BALFEST remote preview' >> "$GITHUB_STEP_SUMMARY"
           echo 'Docker verified, application tests passed, FastAPI + Nginx deployed and HTTP smoke tests passed.' >> "$GITHUB_STEP_SUMMARY"
           echo 'The preview listens on remote loopback 127.0.0.1:8080.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'On Windows, open an SSH tunnel: ssh -L 8080:127.0.0.1:8080 -p PORT USER@SERVER' >> "$GITHUB_STEP_SUMMARY"
+          echo 'On Windows, open an SSH tunnel: ssh -L 8080:127.0.0.1:8080 USER@SERVER' >> "$GITHUB_STEP_SUMMARY"
           echo 'Then open http://127.0.0.1:8080/ in your browser.' >> "$GITHUB_STEP_SUMMARY"
