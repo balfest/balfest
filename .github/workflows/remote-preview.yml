@@ -108,6 +108,5 @@ jobs:
         run: |
           echo '### BALFEST remote preview' >> "$GITHUB_STEP_SUMMARY"
           echo 'Docker verified, application tests passed, FastAPI + Nginx deployed and HTTP smoke tests passed.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'The preview listens on remote loopback 127.0.0.1:8080.' >> "$GITHUB_STEP_SUMMARY"
-          echo 'On Windows, open an SSH tunnel: ssh -L 8080:127.0.0.1:8080 USER@SERVER' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Then open http://127.0.0.1:8080/ in your browser.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The site is published on remote TCP port 80.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Open http://DEPLOY_HOST/ in your browser. Ensure inbound TCP/80 is allowed by the server/cloud firewall.' >> "$GITHUB_STEP_SUMMARY"
