@@ -47,26 +47,7 @@ ssh -i ~/.ssh/balfest_deploy USER@SERVER whoami
 
 Замените USER и SERVER; при нестандартном порте добавьте -p PORT.
 
-## 3. Проверенный SSH host key
-
-Не отключайте StrictHostKeyChecking. Из Git Bash:
-
-~~~bash
-ssh-keyscan -t ed25519 -p 22 SERVER > balfest-known-hosts.txt
-ssh-keygen -lf balfest-known-hosts.txt
-~~~
-
-Сравните fingerprint с доверенной консолью провайдера, где выполняется:
-
-~~~bash
-sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
-~~~
-
-Только после совпадения используйте полное содержимое
-balfest-known-hosts.txt в секретах GitHub. Порт в ssh-keyscan должен
-совпадать с реальным SSH-портом.
-
-## 4. GitHub Secrets и Variable
+## 3. GitHub Secrets
 
 Откройте https://github.com/balfest/balfest/settings/secrets/actions .
 
@@ -77,10 +58,15 @@ balfest-known-hosts.txt в секретах GitHub. Порт в ssh-keyscan до
 | DEPLOY_HOST | публичный IPv4 или DNS-сервер |
 | DEPLOY_USER | SSH-пользователь удалённого сервера |
 | DEPLOY_SSH_KEY | приватный ключ ~/.ssh/balfest_deploy целиком |
-| DEPLOY_KNOWN_HOSTS | проверенная строка (или строки) known_hosts |
 
-При нестандартном SSH-порту добавьте Repository variable DEPLOY_PORT.
-Без этой переменной используется 22. Никакие секреты не публикуйте здесь.
+SSH использует стандартный порт **22**. Дополнительная переменная порта
+не требуется. Секрет DEPLOY_KNOWN_HOSTS больше не используется.
+
+**Компромисс безопасности:** SSH настроен с StrictHostKeyChecking=accept-new.
+При первом подключении GitHub runner автоматически доверяет предъявленному
+сервером ключу. Поскольку runner создаётся заново при каждом запуске, это
+не защищает первый контакт от подмены сервера (MITM). Для production лучше
+вернуть закреплённый ключ хоста или другой надёжный механизм проверки.
 
 В Settings → Environments создайте окружение preview; если доступны
 deployment protection rules, включите ручное подтверждение. Workflow
@@ -128,11 +114,11 @@ https://github.com/balfest/balfest/actions
 В Git Bash на Windows запустите:
 
 ~~~bash
-ssh -i ~/.ssh/balfest_deploy -p 22 -N -L 8080:127.0.0.1:8080 USER@SERVER
+ssh -i ~/.ssh/balfest_deploy -N -L 8080:127.0.0.1:8080 USER@SERVER
 ~~~
 
 Держите этот терминал открытым. На ноутбуке откройте
-http://127.0.0.1:8080/ . Для другого SSH-порта замените 22.
+http://127.0.0.1:8080/ . Порт SSH фиксирован: 22.
 
 Не открывайте TCP 8080 в Интернет. У Docker свои правила публикации
 портов и UFW не всегда ограничивает их. Для публичного balfest.ru
@@ -149,7 +135,7 @@ curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 ~~~
 
 Если Permission denied — проверить authorized_keys и ключ.
-Если Host key verification failed — сверить host fingerprint.
+Если Host key verification failed — проверить SSH и известные ключи.
 Если sudo requires password — исправить права. Если Connection timed out —
 проверить публичную доступность SSH-порта и сетевые ограничения VPS.
 
