@@ -1,64 +1,43 @@
-# BALFEST: локальный GitHub Actions runner на Ubuntu VirtualBox
+# БАЛФЕСТ IV: автоматический Docker-деплой в Ubuntu VirtualBox
 
-Схема: GitHub Actions (self-hosted runner) → тесты FastAPI → Docker Compose → Nginx → сайт в браузере.
-Это **тестовый HTTP-стенд**: он не публикует balfest.ru в интернете.
-Nginx слушает TCP 8080 в Ubuntu-госте; Uvicorn слушает 8000 только внутри Docker.
+GitHub Actions для репозитория [balfest/balfest](https://github.com/balfest/balfest)
+запускает проверки приложения, при необходимости устанавливает Docker Engine и
+Compose, поднимает **FastAPI + Nginx** и проверяет работу сайта.
 
-## 1. Docker в Ubuntu 24.04
+**Результат — только локальный предпросмотр по HTTP.** Никакого размещения
+на balfest.ru и изменений DNS workflow не выполняет.
 
-Все команды ниже выполняются в **терминале Ubuntu внутри VirtualBox**, а не в Git Bash Windows.
-Проверьте архитектуру: uname -m (ожидается x86_64).
+## Что workflow может сделать автоматически
 
-~~~bash
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl git
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
-. /etc/os-release
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-sudo systemctl enable --now docker
-sudo usermod -aG docker "$USER"
-~~~
+1. Проверить Ubuntu x86_64 и наличие непрерывного (noninteractive) sudo.
+2. При отсутствии Docker установить его из официального apt-репозитория Docker.
+3. Проверить движок Docker и Compose запуском тестового образа hello-world.
+4. Проверить синтаксис Docker Compose.
+5. Собрать test-stage Dockerfile и запустить весь suite tests/test_app.py.
+6. Собрать и запустить контейнеры FastAPI и Nginx.
+7. Выполнить nginx -t внутри веб-контейнера.
+8. Проверить healthchecks двух контейнеров, главную страницу, дату,
+   robots.txt, sitemap.xml, тему, CSS, JS, WebP и ответы HTTP 404.
+9. При ошибке вывести диагностику контейнеров и логи.
 
-**Выйдите из сеанса Ubuntu и войдите снова** (или выполните newgrp docker);
-проверьте docker version и docker compose version.
-Группа docker фактически даёт root-права: для runner используйте только отдельную VM
-без личных файлов и production-секретов.
+Если Docker уже установлен и работает, установка пропускается (идемпотентно).
 
-## 2. Запуск контейнеров вручную
+## Что один раз нужно подготовить вручную
 
-~~~bash
-git clone https://github.com/balfest/balfest.git
-cd balfest
-git checkout feature/local-vm-docker-preview
-docker build --target test -t balfest-preview-tests:latest .
-docker compose up -d --build --wait --wait-timeout 120
-docker compose ps
-curl -I http://127.0.0.1:8080/
-~~~
+Автоматизация GitHub Actions **не может сама запустить runner, если его ещё нет**.
+Необходима включённая Ubuntu VM в VirtualBox и запущенный runner.
 
-Ожидаемый HTTP-ответ: 200 OK. После слияния PR используйте main вместо
-feature/local-vm-docker-preview. Для диагностики:
-docker compose logs --tail=100.
-Для остановки: docker compose down.
-
-## 3. GitHub self-hosted runner
-
-Откройте https://github.com/balfest/balfest/settings/actions/runners/new .
-Выберите **Linux → x64**. Выполните в Ubuntu **актуальные команды GitHub** для
-загрузки runner, проверки checksum и распаковки — от обычного пользователя, НЕ root.
-
-К команде конфигурации добавьте пользовательскую метку balfest-vm.
-Образец (одноразовый token брать ТОЛЬКО на странице GitHub, никогда не отправлять в чат):
+Откройте: https://github.com/balfest/balfest/settings/actions/runners/new
+и выберите Linux, x64. В Ubuntu от обычного пользователя (не root) выполните
+команды GitHub по скачиванию/проверке checksum/распаковке runner.
+При конфигурировании задайте label **balfest-vm**:
 
 ~~~bash
 ./config.sh --url https://github.com/balfest/balfest --token TOKEN_FROM_GITHUB --labels balfest-vm
 ~~~
 
-Затем из каталога actions-runner запустите службу:
+Токен берите на странице GitHub, никому не отправляйте и не публикуйте.
+В каталоге runner установите службу:
 
 ~~~bash
 sudo ./svc.sh install
@@ -66,57 +45,102 @@ sudo ./svc.sh start
 sudo ./svc.sh status
 ~~~
 
-На GitHub Settings → Actions → Runners должен отображаться Online runner с
-метками self-hosted, Linux, X64, balfest-vm.
+Runner должен быть виден как **Online** на странице Settings → Actions → Runners,
+с метками self-hosted, Linux, X64, balfest-vm.
 
-После слияния PR с main откройте GitHub → Actions → BALFEST local VM preview →
-Run workflow. Каждый push в main также обновит предпросмотр в работающей VM.
-Тесты выполняются при сборке Docker test stage; затем запускаются FastAPI и Nginx,
-и проверяются HTTP-страница, robots.txt и sitemap.xml.
+### Неинтерактивный sudo (обязателен для автоматической установки)
 
-## 4. Как открыть сайт на Windows
+Работающий как системная служба runner **не может запросить пароль sudo**.
+Поэтому workflow проверяет sudo -n и останавливается с понятным сообщением,
+если у runner отсутствуют необходимые полномочия.
 
-**Внутри Ubuntu:** http://127.0.0.1:8080/
+Самый простой вариант для **изолированной, одноцелевой VM без личных файлов
+и секретов** — разрешить только пользователю runner выполнять sudo без пароля.
+В Ubuntu запустите:
 
-### Вариант NAT (простой и безопасный для проверки на Windows)
+~~~bash
+whoami
+sudo visudo -f /etc/sudoers.d/balfest-runner
+~~~
 
-Выключите VM. VirtualBox → Settings → Network → Adapter 1 → NAT →
-Advanced → Port Forwarding. Добавьте правило:
+В редакторе добавьте строку, подставив имя пользователя, которое вывела whoami:
 
-| Поле | Значение |
+~~~text
+USERNAME ALL=(root) NOPASSWD: ALL
+~~~
+
+Это **высокие привилегии**: любой код workflow в main получает root-права
+на Ubuntu VM. Не используйте такую схему на основном компьютере или машине
+с личными файлами и ключами. Более безопасная альтернатива — установить
+Docker в Ubuntu вручную и выполнять деплой на изолированном сервере
+с отдельными учётными данными; либо держать репозиторий инфраструктуры
+приватным. Не давайте runner доступ к хостовым папкам VirtualBox.
+
+После сохранения проверьте в Ubuntu от того же пользователя:
+
+~~~bash
+sudo -n true && echo "sudo готов"
+~~~
+
+## Как запустить автоматизацию
+
+После объединения PR в ветку main зайдите в GitHub → Actions →
+**BALFEST local VM preview** → **Run workflow**.
+Также каждый push в main автоматически запускает workflow.
+Запуски из pull_request намеренно отсутствуют: это публичный репозиторий,
+и запуск недоверенного PR-кода на self-hosted runner опасен.
+
+Первый запуск установит Docker, пройдёт тесты и запустит Nginx на порту 8080.
+VM должна быть включена и доступна по сети.
+
+## Как открыть локальный сайт в браузере Windows
+
+В Ubuntu тест: curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
+
+**Если VirtualBox настроен в NAT:** выключите VM, зайдите в Settings →
+Network → Adapter 1 → NAT → Advanced → Port Forwarding. Добавьте:
+
+| Настройка | Значение |
 |---|---|
 | Name | BALFEST_HTTP |
 | Protocol | TCP |
 | Host IP | 127.0.0.1 |
 | Host Port | 8080 |
-| Guest IP | пусто |
+| Guest IP | пустой |
 | Guest Port | 8080 |
 
-Включите VM. **На Windows:** http://127.0.0.1:8080/ .
-iPhone с таким правилом доступа не получит.
+Запустите VM. На Windows откройте **http://127.0.0.1:8080/**.
+Этот вариант не открывает доступ с iPhone.
 
-### Вариант Bridged Adapter (проверка также с iPhone)
+**Если VirtualBox использует Bridged Adapter:** в Ubuntu выполните
+hostname -I, а на Windows или iPhone в том же Wi-Fi используйте
+http://IP_ВИРТУАЛКИ:8080/ (если firewall и роутер разрешают соединение).
+Не открывайте порт 8080 через интернет.
 
-Настройте VirtualBox Adapter 1 → Bridged Adapter.
-В Ubuntu выполните hostname -I и найдите IP виртуалки.
-На Windows и iPhone в той же локальной Wi-Fi-сети откройте:
-http://IP_ВИРТУАЛКИ:8080/ .
-Работа зависит от настроек роутера, UFW и изоляции устройств в Wi-Fi.
-**Нельзя** пробрасывать порт 8080 в интернет с домашнего роутера.
+## Диагностика
 
-## 5. Обслуживание и риски
+В Ubuntu, из каталога с актуальным compose.yaml, при наличии прав sudo:
 
 ~~~bash
-docker compose --project-name balfest-preview ps
-docker compose --project-name balfest-preview logs --tail=100
-curl -I http://127.0.0.1:8080/
+sudo docker compose --project-name balfest-preview ps
+sudo docker compose --project-name balfest-preview logs --tail=100
+curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/
 ~~~
 
-Если Ubuntu VM выключена, workflow будет ждать runner, а сайт не откроется.
-Runner разрешён только для main и ручного запуска: **нет pull_request trigger**.
-GitHub предупреждает, что self-hosted runner в **публичном** репозитории
-потенциально опасен. Не запускайте недоверенный PR-код, проверяйте изменения
-перед merge, лучше используйте приватный репозиторий для инфраструктуры.
-Не кладите токены, пароли и production-ключи в виртуалку.
-Для balfest.ru потребуется отдельный сервер с TLS/HTTPS; DNS домена не менять
-на домашний IP.
+Если VM выключена, site-preview недоступен, а GitHub Actions ожидает runner.
+В контейнерах нет зависимости от временной папки checkout: конфигурация
+Nginx включена в Docker image.
+
+При первой установке Docker потребуется доступ в интернет к apt-репозиториям
+Ubuntu, download.docker.com и Docker Hub. Если в Ubuntu уже стоит конфликтующая
+версия пакета docker.io, скрипт не удалит её автоматически — устраните
+конфликт вручную.
+
+## Ограничения безопасности
+
+GitHub предупреждает о рисках self-hosted runners для публичных репозиториев.
+Этот workflow **не запускает PR из форков**, однако любой код, допущенный
+через merge в main, может исполняться на вашем компьютере в VM.
+Проверяйте изменения до merge; не храните secrets и токены внутри VM.
+Docker с sudo обладает привилегиями root. Это не production-окружение
+и не замена размещению на Selectel с HTTPS.
