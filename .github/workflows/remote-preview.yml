@@ -35,10 +35,10 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          #DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
-          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
             if [[ -z "${!key}" ]]; then
               echo "::error::Missing GitHub secret: $key"
               exit 1
@@ -52,7 +52,33 @@ jobs:
           install -d -m 700 "$HOME/.ssh"
           printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/balfest_deploy"
           chmod 600 "$HOME/.ssh/balfest_deploy"
-         
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+          {
+            echo 'Host balfest-remote'
+            printf '  HostName %s\n' "$DEPLOY_HOST"
+            printf '  User %s\n' "$DEPLOY_USER"
+            printf '  Port %s\n' "$DEPLOY_PORT"
+            printf '  IdentityFile %s/.ssh/balfest_deploy\n' "$HOME"
+            printf '  UserKnownHostsFile %s/.ssh/known_hosts\n' "$HOME"
+            echo '  StrictHostKeyChecking yes'
+            echo '  IdentitiesOnly yes'
+            echo '  BatchMode yes'
+            echo '  ConnectTimeout 20'
+            echo '  ServerAliveInterval 15'
+          } > "$HOME/.ssh/config"
+          chmod 600 "$HOME/.ssh/config"
+
+          # Fail before deployment if the alias is missing or points elsewhere.
+          configured_host="$(ssh -G balfest-remote | awk '$1 == "hostname" {print $2; exit}')"
+          if [[ "$configured_host" != "$DEPLOY_HOST" ]]; then
+            echo "::error::SSH alias balfest-remote does not resolve to DEPLOY_HOST. Check ~/.ssh/config."
+            exit 1
+          fi
+
+          # Verifies network reachability, pinned host identity and user authentication.
+          ssh -T balfest-remote 'printf "SSH connection to remote server verified\n"'
 
       # First remote operation: check whether Docker works, install if missing.
       - name: Check Docker on remote server and install if needed
