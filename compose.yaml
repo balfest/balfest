@@ -1,0 +1,41 @@
+name: balfest-preview
+
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    image: balfest-preview-app:local
+    restart: unless-stopped
+    expose:
+      - "8000"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/', timeout=5).read()"]
+      interval: 10s
+      timeout: 6s
+      retries: 8
+      start_period: 15s
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.nginx
+    image: balfest-preview-web:local
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    # SSH tunnel to the remote host is required by default.
+    # Docker-published ports can bypass Ubuntu UFW firewall policies.
+    ports:
+      - "127.0.0.1:8080:80"
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 6s
+      retries: 8
+      start_period: 10s

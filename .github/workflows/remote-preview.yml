@@ -1,0 +1,111 @@
+name: BALFEST remote preview deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Deploy only trusted main. No pull_request or pull_request_target.
+permissions:
+  contents: read
+
+concurrency:
+  group: balfest-remote-preview
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Check remote Docker, test and deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    environment: preview
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Configure verified SSH access
+        id: ssh
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          for key in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            if [[ -z "${!key}" ]]; then
+              echo "::error::Missing GitHub secret: $key"
+              exit 1
+            fi
+          done
+          [[ "$DEPLOY_HOST" =~ ^[a-zA-Z0-9.-]+$ ]] || { echo "::error::Invalid DEPLOY_HOST"; exit 1; }
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*$ ]] || { echo "::error::Invalid DEPLOY_USER"; exit 1; }
+          [[ "$DEPLOY_PORT" =~ ^[0-9]{1,5}$ ]] || { echo "::error::Invalid DEPLOY_PORT"; exit 1; }
+          (( 10#$DEPLOY_PORT >= 1 && 10#$DEPLOY_PORT <= 65535 )) || { echo "::error::Port out of range"; exit 1; }
+
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$HOME/.ssh/balfest_deploy"
+          chmod 600 "$HOME/.ssh/balfest_deploy"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+          {
+            echo 'Host balfest-remote'
+            printf '  HostName %s\n' "$DEPLOY_HOST"
+            printf '  User %s\n' "$DEPLOY_USER"
+            printf '  Port %s\n' "$DEPLOY_PORT"
+            printf '  IdentityFile %s/.ssh/balfest_deploy\n' "$HOME"
+            printf '  UserKnownHostsFile %s/.ssh/known_hosts\n' "$HOME"
+            echo '  StrictHostKeyChecking yes'
+            echo '  IdentitiesOnly yes'
+            echo '  BatchMode yes'
+            echo '  ConnectTimeout 20'
+            echo '  ServerAliveInterval 15'
+          } > "$HOME/.ssh/config"
+          chmod 600 "$HOME/.ssh/config"
+
+          # Verifies network reachability and pinned server identity.
+          ssh -T balfest-remote 'printf "SSH connection to remote server verified\n"'
+
+      # First remote operation: check whether Docker works, install if missing.
+      - name: Check Docker on remote server and install if needed
+        run: |
+          set -euo pipefail
+          ssh -T balfest-remote 'sudo -n bash -s' < deploy/install-docker.sh
+          ssh -T balfest-remote 'sudo -n docker version && sudo -n docker compose version && sudo -n docker info >/dev/null'
+          echo 'Remote Docker Engine and Compose are ready.'
+
+      - name: Validate Compose configuration on GitHub runner
+        run: docker compose --project-name balfest-preview config --quiet
+
+      - name: Run Python unit tests in clean Docker build
+        run: docker build --target test --tag balfest-preview-tests:${{ github.sha }} .
+
+      - name: Transfer release and deploy containers over SSH
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_SHA" =~ ^[a-f0-9]{40}$ ]]
+          tar --create --gzip --file - \
+            Dockerfile .dockerignore compose.yaml requirements.txt app \
+            deploy/Dockerfile.nginx deploy/nginx.conf deploy/check-preview.sh \
+          | ssh -T balfest-remote \
+              "set -eu; release_dir=\$HOME/balfest-preview/releases/$GITHUB_SHA; mkdir -p \"\$release_dir\"; tar --extract --gzip --file - --directory \"\$release_dir\"; cd \"\$release_dir\"; sudo -n docker compose --project-name balfest-preview config --quiet; sudo -n docker compose --project-name balfest-preview up --detach --build --remove-orphans --wait --wait-timeout 120; sudo -n docker compose --project-name balfest-preview exec -T web nginx -t; bash deploy/check-preview.sh"
+
+      - name: Show remote logs if deployment fails
+        if: failure() && steps.ssh.outcome == 'success'
+        run: |
+          ssh -T balfest-remote 'sudo -n docker compose --project-name balfest-preview ps || true; sudo -n docker compose --project-name balfest-preview logs --tail=100 || true' || true
+
+      - name: Deployment summary
+        run: |
+          echo '### BALFEST remote preview' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Docker verified, application tests passed, FastAPI + Nginx deployed and HTTP smoke tests passed.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'The preview listens on remote loopback 127.0.0.1:8080.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'On Windows, open an SSH tunnel: ssh -L 8080:127.0.0.1:8080 -p PORT USER@SERVER' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Then open http://127.0.0.1:8080/ in your browser.' >> "$GITHUB_STEP_SUMMARY"
