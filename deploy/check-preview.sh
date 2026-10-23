@@ -2,7 +2,7 @@
 # Check the deployed Nginx -> FastAPI application from the remote server.
 set -Eeuo pipefail
 
-BASE_URL="http://127.0.0.1:8080"
+BASE_URL="http://127.0.0.1"
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -54,4 +54,4 @@ if ! grep -qi '^server: nginx' "$TMP_DIR/headers.txt"; then
 fi
 
 echo "PASS: FastAPI/Nginx healthy, content, SEO, assets, and 404 verified."
-echo "Remote HTTP preview is listening at $BASE_URL/"
+echo "Remote HTTP endpoint passed smoke tests at at $BASE_URL/"
