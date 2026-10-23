@@ -1,4 +1,4 @@
-name: BALFEST remote preview deploy
+name: BALFEST production deploy
 
 on:
   push:
@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: balfest-remote-preview
+  group: balfest-production
   cancel-in-progress: false
 
 jobs:
   deploy:
-    name: Check remote Docker, test and deploy
+    name: Test and deploy BALFEST
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     environment: preview
@@ -106,7 +106,7 @@ jobs:
 
       - name: Deployment summary
         run: |
-          echo '### BALFEST remote preview' >> "$GITHUB_STEP_SUMMARY"
+          echo '### BALFEST production' >> "$GITHUB_STEP_SUMMARY"
           echo 'Docker verified, application tests passed, FastAPI + Nginx deployed and HTTP smoke tests passed.' >> "$GITHUB_STEP_SUMMARY"
           echo 'The site is published on remote TCP port 80.' >> "$GITHUB_STEP_SUMMARY"
           echo 'Open http://DEPLOY_HOST/ in your browser. Ensure inbound TCP/80 is allowed by the server/cloud firewall.' >> "$GITHUB_STEP_SUMMARY"
